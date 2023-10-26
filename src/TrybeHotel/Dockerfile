@@ -1,19 +1,11 @@
-# https://hub.docker.com/_/microsoft-dotnet
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
-WORKDIR /src
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-env
+WORKDIR /app
+COPY . ./
 
-# copy csproj and restore as distinct layers
-COPY ./*.sln .
-COPY ./*.csproj .
 RUN dotnet restore
+RUN dotnet publish -c Release -o out
 
-# copy everything else and build app
-COPY . ./TrybeHotel/
-WORKDIR /src/TrybeHotel
-RUN dotnet publish -c release -o /app --no-restore --no-cache /restore
-
-# final stage/image
 FROM mcr.microsoft.com/dotnet/aspnet:6.0
 WORKDIR /app
-COPY --from=build /app ./
+COPY --from=build-env /app/out .
 ENTRYPOINT ["dotnet", "TrybeHotel.dll"]
